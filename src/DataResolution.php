@@ -3,6 +3,7 @@
 namespace Drupal\data_resolver;
 
 use Drupal\Core\TypedData\TypedDataInterface;
+use Drupal\Core\TypedData\ListInterface;
 
 class DataResolution {
 
@@ -33,10 +34,10 @@ class DataResolution {
    * @param \Drupal\Core\TypedData\TypedDataInterface $data
    *   The data from which to resolve a value.
    */
-  public function __construct(TypedDataInterface $data, $path) {
+  public function __construct(TypedDataInterface $data, $path = NULL) {
     $this->data = $data;
     $this->path = $path;
-    $this->chain = $this->expandPath($path);
+    $this->chain = ($path || empty($path)) ? $this->expandPath($path) : [];
   }
 
   /**
@@ -50,12 +51,12 @@ class DataResolution {
    * Resolves a data value, including any conditions.
    */
   public function resolve() {
-    if (strlen($this->path) == 0) return $this->data;
+    if (empty($this->chain)) return $this->data;
 
     if (is_null($this->data)) return NULL;
 
     $value = array_reduce($this->chain, function ($value, $bit) {
-      if ($bit == 'entity') return $value->get($bit)->getTarget();
+      if ($bit === 'entity') return $value->get($bit)->getTarget();
       return $value->get($bit);
     }, $this->data);
 
@@ -63,7 +64,13 @@ class DataResolution {
   }
 
   protected function expandPath($path) {
-    return explode('.', $path);
+    $bits = explode('.', $path);
+
+    $bits = array_map(function ($bit) {
+      return (is_numeric($bit)) ? intval($bit) : $bit;
+    }, $bits);
+
+    return $bits;
   }
 
 }
