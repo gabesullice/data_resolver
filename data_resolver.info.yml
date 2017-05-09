@@ -1,0 +1,6 @@
+name: Data Resolver
+description: Monadic typed data value resolver.
+package: Internal APIs
+
+type: module
+core: 8.x
