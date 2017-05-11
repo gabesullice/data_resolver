@@ -81,32 +81,45 @@ class DataResolution {
     // If the data is NULL, don't bother, return NULL.
     if (is_null($this->data)) return NULL;
 
-    // Collect all of the values into an array.
-    return $this->collectTypedData();
-  }
-
-  protected function collectTypedData() {
-    $reducer = function ($resolved, $property) {
-      $values = $this->resolveProperty($resolved, $property);
-      return $values;
-    };
-
     // For each property of the path, resolve the next bit of data.
-    $resolved = array_reduce($this->chain, $reducer, $this->data);
+    $resolved = $this->data;
+    foreach ($this->chain as $property) {
+      $resolved = $this->resolveProperty($resolved, $property);
+    }
 
     return $resolved;
   }
 
-  protected function merge(array $list) {
-    return call_user_func_array('array_merge', $list);
+  /**
+   * Sets the typed data manager for the object.
+   *
+   * Simply here for future testability.
+   */
+  public function setTypedDataManager(TypedDataManagerInterface $typed_data_manager) {
+    $this->typedDataManager = $typed_data_manager;
   }
 
+  /**
+   * Resolves a single property of a path from a piece of data.
+   *
+   * The input data may be a ListData, ComplexData, or DataReference instance,
+   * or an array of any of the aforementioned types.
+   *
+   * @param mixed $data
+   *   The data from which to get a value. See above.
+   * @param mixed $data
+   *   The single property to fetch.
+   *
+   * @return array
+   *   Always returns an array. Empty or filled with the fetched property.
+   */
   protected function resolveProperty($data, $property) {
     if (is_array($data)) {
+      $items = [];
       foreach ($data as $item) {
         $items[] = $this->resolveProperty($item, $property);
       }
-      return $this->merge($items);
+      return (empty($items)) ? [] : $this->merge($items);
     }
     elseif ($data instanceof ListInterface) {
       if ($data->isEmpty()) {
@@ -132,6 +145,12 @@ class DataResolution {
     }
   }
 
+  /**
+   * Validates that the requested path *can* exist.
+   *
+   * This step is to avoid unnecessary queries when there is no chance to
+   * resolved the requested data path. It may be wise to use this in an assert.
+   */
   protected function validatePath() {
     $reducer = function ($definition, $property) {
       $definition = $this->resolveDefinition($definition, $property);
@@ -152,6 +171,9 @@ class DataResolution {
     );
   }
 
+  /**
+   * Resolves a DataDefinition for a particular property.
+   */
   protected function resolveDefinition($definition, $property) {
     if ($definition instanceof ListDataDefinitionInterface) {
       if (is_int($property)) {
@@ -175,6 +197,15 @@ class DataResolution {
     return $definition->getPropertyDefinition($property);
   }
 
+  /**
+   * Helper which splits a path on a dot (.) and converts offsets to integers.
+   *
+   * @param string $path
+   *   The property path to expand.
+   *
+   * @return array
+   *   The expanded property path.
+   */
   protected function expandPath($path) {
     if (is_null($path) || empty($path)) return [];
 
@@ -187,11 +218,27 @@ class DataResolution {
     return $bits;
   }
 
+  /**
+   * Gets the typed data manager from the container if one is not already set.
+   */
   protected function typedDataManager() {
     if (!isset($this->typedDataManager)) {
       $this->typedDataManager = \Drupal::typedDataManager();
     }
     return $this->typedDataManager;
+  }
+
+  /**
+   * Helper function to flatten a two-dimensional array into a single array.
+   *
+   * @param array $list
+   *   An array of arrays to flatten.
+   *
+   * @return array
+   *   The flattened array.
+   */
+  protected function merge(array $list) {
+    return call_user_func_array('array_merge', $list);
   }
 
 }
