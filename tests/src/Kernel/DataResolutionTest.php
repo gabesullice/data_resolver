@@ -102,6 +102,7 @@ class DataResolutionTest extends KernelTestBase {
    */
   public function resolveEntityDataProvider() {
     return [
+      ['uid.entity.name.1', [], FALSE],
       ['title', [['value' => 'node0']], TRUE],
       ['uid', [['target_id' => 1]], TRUE],
       ['uid.entity.name', [['value' => 'user0']], TRUE],

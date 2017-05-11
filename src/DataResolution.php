@@ -114,7 +114,8 @@ class DataResolution {
       }
 
       if (is_int($property)) {
-        return [$data->get($property)];
+        $value = $data->get($property);
+        return (is_null($value)) ? [] : [$value];
       }
 
       foreach ($data as $item) {
