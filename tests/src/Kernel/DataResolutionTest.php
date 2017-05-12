@@ -70,19 +70,21 @@ class DataResolutionTest extends KernelTestBase {
    */
   public function testResolve_entity_data($path, $expect, $many) {
     $resolution = DataResolution::create($this->node0->getTypedData(), $path);
-    $actual = $resolution->resolve();
-    if ($many) {
-      foreach ($expect as $index => $item) {
-        foreach ($item as $key => $value) {
-          $this->assertEquals($value, $actual[$index]->first()->get($key)->getValue());
+
+    $resolved = $resolution->resolve();
+
+    if (empty($expect)) {
+      $this->assertTrue($resolved->isEmpty());
+      return;
+    }
+
+    foreach ($expect as $i => $item) {
+      foreach ($item as $j => $compare) {
+        foreach ($compare as $key => $value) {
+          $actual = $resolved->get($i)->getValue()->get($j)->get($key);
+          $this->assertEquals($value, $actual->getValue());
         }
       }
-    }
-    else {
-      if (!empty($expect)) {
-        $this->assertEquals($expect, $actual[0]->getValue());
-      }
-      $this->assertEquals($expect, $actual);
     }
   }
 
@@ -102,12 +104,12 @@ class DataResolutionTest extends KernelTestBase {
    */
   public function resolveEntityDataProvider() {
     return [
+      ['title', [[['value' => 'node0']]], TRUE],
+      ['uid', [[['target_id' => 1]]], TRUE],
+      ['uid.entity.name', [[['value' => 'user0']]], TRUE],
       ['uid.entity.name.1', [], FALSE],
-      ['title', [['value' => 'node0']], TRUE],
-      ['uid', [['target_id' => 1]], TRUE],
-      ['uid.entity.name', [['value' => 'user0']], TRUE],
       ['uid.entity.roles.0', [], FALSE],
-      ['uid.0.entity.name', [['value' => 'user0']], TRUE],
+      ['uid.0.entity.name', [[['value' => 'user0']]], TRUE],
       ['uid.0.entity.roles.0', [], FALSE],
       ['uid.0.entity.roles.1', [], FALSE],
     ];

@@ -70,9 +70,9 @@ class DataResolution {
   /**
    * Resolves a data value, including any conditions.
    *
-   * @return array
-   *   This method will always return an array, even when no values exists. In
-   *   that case, an empty array will be returned.
+   * @return \Drupal\Core\TypedData\ListInterface
+   *   This method will always return a list, regardless of whether any data
+   *   actually exists. In that case, the list will simply be empty.
    */
   public function resolve() {
     // If there is no path, just return the data.
@@ -87,7 +87,10 @@ class DataResolution {
       $resolved = $this->resolveProperty($resolved, $property);
     }
 
-    return $resolved;
+    return $this->typedDataManager()->create(
+      $this->typedDataManager()->createDataDefinition('list'),
+      $resolved
+    );
   }
 
   /**
