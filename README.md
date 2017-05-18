@@ -1,6 +1,10 @@
-This is a helper module for extracting nested values for Drupal TypedData.
+# Data Resolver
+
+This is a helper module for extracting nested values from Drupal TypedData objects.
 
 You can specify a "property path" like `uid.0.name.0.value` to extract an authors username given a Node as TypedData.
+
+## Usage
 
 ```php
 $resolver = DataResolver::create($node->getTypedData());
@@ -10,7 +14,9 @@ $resolution = $resolver->get('uid.0.name.0.value');
 $username = $resolution->resolve(); // $username == 'gabe1991`
 ```
 
-The `->get()` then `->resolve()` pattern exists so that property resolution can be optimized in the future.
+## Design decisions
+
+The `get()` followed by `resolve()` method calls exist so that property resolution can be optimized in the future.
 
 Eventually, this should work:
 
